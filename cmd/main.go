@@ -1,8 +1,8 @@
 package main
 
 import (
-	"file-upload-api/config"
-	"file-upload-api/internal/handlers"
+	"file-upload/config"
+	"file-upload/internal/handlers"
 
 	"github.com/gin-gonic/gin"
 )
