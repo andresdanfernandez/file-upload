@@ -18,11 +18,13 @@ func ListFilesHandler(c *gin.Context) {
 	}
 	defer db.Close()
 
+	userID := c.GetInt("user_id")
 	rows, err := db.Query(`
-		SELECT id, filename, url, size, uploaded_at
+		SELECT id, user_id, filename, url, size, uploaded_at
 		FROM files
+		WHERE user_id = $1
 		ORDER BY uploaded_at DESC
-	`)
+	`, userID)
 	if err != nil {
 		log.Println("Failed to query files:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "query failed"})
@@ -33,7 +35,7 @@ func ListFilesHandler(c *gin.Context) {
 	var files []models.File
 	for rows.Next() {
 		var f models.File
-		if err := rows.Scan(&f.ID, &f.Filename, &f.URL, &f.Size, &f.UploadedAt); err != nil {
+		if err := rows.Scan(&f.ID, &f.UserID, &f.Filename, &f.URL, &f.Size, &f.UploadedAt); err != nil {
 			log.Println("Failed to scan row:", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read result"})
 			return

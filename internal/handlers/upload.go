@@ -38,10 +38,11 @@ func UploadHandler(c *gin.Context) {
 	}
 	defer db.Close()
 
+	userID := c.GetInt("user_id")
 	_, err = db.Exec(`
-        INSERT INTO files (filename, url, size)
-        VALUES ($1, $2, $3)
-    `, file.Filename, url, file.Size)
+        INSERT INTO files (user_id, filename, url, size)
+        VALUES ($1, $2, $3, $4)
+    `, userID, file.Filename, url, file.Size)
 	if err != nil {
 		log.Println("Failed to insert file metadata:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save file metadata"})
