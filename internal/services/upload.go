@@ -36,8 +36,8 @@ func UploadFile(filename string, data io.Reader) (string, error) {
 		Bucket: aws.String(os.Getenv("S3_BUCKET_NAME")),
 		Key:    aws.String(key),
 		Body:   bytes.NewReader(buffer.Bytes()),
-		ACL:    aws.String("public-read"),
 	})
+
 	if err != nil {
 		return "", err
 	}

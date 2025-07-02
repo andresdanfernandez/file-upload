@@ -5,6 +5,8 @@ import (
 	"os"
 	"time"
 
+	"log"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -15,11 +17,11 @@ import (
 func DownloadHandler(c *gin.Context) {
 	key := c.Param("key")
 	if key == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing key"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing file key in URL"})
 		return
 	}
 
-	sess, _ := session.NewSession(&aws.Config{
+	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String(os.Getenv("AWS_REGION")),
 		Credentials: credentials.NewStaticCredentials(
 			os.Getenv("AWS_ACCESS_KEY_ID"),
@@ -28,15 +30,22 @@ func DownloadHandler(c *gin.Context) {
 		),
 	})
 
-	svc := s3.New(sess)
-	req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
+	if err != nil {
+		log.Println("Failed to create AWS session:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not initialize AWS session"})
+		return
+	}
+
+	s3Client := s3.New(sess)
+
+	req, _ := s3Client.GetObjectRequest(&s3.GetObjectInput{
 		Bucket: aws.String(os.Getenv("S3_BUCKET_NAME")),
 		Key:    aws.String(key),
 	})
-
 	urlStr, err := req.Presign(10 * time.Minute)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate URL"})
+		log.Println("Failed to presign URL:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate presigned URL"})
 		return
 	}
 

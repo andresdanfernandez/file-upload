@@ -1,14 +1,12 @@
 package handlers
 
 import (
-	"database/sql"
+	"file-upload/internal/database"
 	"file-upload/internal/services"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
-	_ "github.com/lib/pq" // Needed to initialize the postgres driver
 )
 
 func UploadHandler(c *gin.Context) {
@@ -27,13 +25,14 @@ func UploadHandler(c *gin.Context) {
 
 	url, err := services.UploadFile(file.Filename, src)
 	if err != nil {
+		log.Println("Failed to upload file:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "upload failed"})
 		return
 	}
 
-	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	db, err := database.Connect()
 	if err != nil {
-		log.Println("Failed to connect to DB", err)
+		log.Println("Failed to connect to DB:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "DB connection failed"})
 		return
 	}
@@ -45,6 +44,8 @@ func UploadHandler(c *gin.Context) {
     `, file.Filename, url, file.Size)
 	if err != nil {
 		log.Println("Failed to insert file metadata:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save file metadata"})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"url": url})
