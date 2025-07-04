@@ -11,6 +11,7 @@ import FileList from './components/FileList'
 import Upload from './components/Upload'
 import Login from './components/Login'
 import Home from './components/Home'
+import Register from './components/Register'
 
 import { theme } from './styles/Theme'
 
@@ -25,6 +26,7 @@ function App() {
             <Button color="inherit" component={Link} to="/login" sx={{ borderRadius: 2, fontWeight: 600 }}>Login</Button>
             <Button color="inherit" component={Link} to="/upload" sx={{ borderRadius: 2, fontWeight: 600 }}>Upload</Button>
             <Button color="inherit" component={Link} to="/files" sx={{ borderRadius: 2, fontWeight: 600 }}>File List</Button>
+            <Button color="inherit" component={Link} to="/register" sx={{ borderRadius: 2, fontWeight: 600 }}>Register</Button>
           </Toolbar>
         </AppBar>
         <Routes>
@@ -32,6 +34,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/upload" element={<Upload />} />
           <Route path="/files" element={<FileList />} />
+          <Route path="/register" element={<Register />} />
         </Routes>
       </Router>
     </ThemeProvider>
