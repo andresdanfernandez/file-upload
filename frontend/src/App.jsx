@@ -4,6 +4,7 @@ import AppBar from '@mui/material/AppBar'
 import Toolbar from '@mui/material/Toolbar'
 import Button from '@mui/material/Button'
 import CssBaseline from '@mui/material/CssBaseline'
+import { ThemeProvider } from '@mui/material/styles'
 import './App.css'
 
 import FileList from './components/FileList'
@@ -11,9 +12,11 @@ import Upload from './components/Upload'
 import Login from './components/Login'
 import Home from './components/Home'
 
+import { theme } from './styles/Theme'
+
 function App() {
   return (
-    <>
+    <ThemeProvider theme={theme}>
       <CssBaseline />
       <Router>
         <AppBar position="static" color="primary" elevation={2} sx={{ borderRadius: 0, mb: 4 }}>
@@ -31,7 +34,7 @@ function App() {
           <Route path="/files" element={<FileList />} />
         </Routes>
       </Router>
-    </>
+    </ThemeProvider>
   )
 }
 
