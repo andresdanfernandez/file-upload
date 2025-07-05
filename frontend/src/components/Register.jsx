@@ -8,6 +8,7 @@ import Stack from '@mui/material/Stack';
 import Grow from '@mui/material/Grow';
 import Fade from '@mui/material/Fade';
 import { useNavigate } from 'react-router-dom';
+import { register } from '../api';
 
 const Register = () => {
   const [email, setEmail] = useState('');
@@ -23,13 +24,8 @@ const Register = () => {
     setSuccess('');
     setLoading(true);
     try {
-      const res = await fetch('/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (res.ok) {
+      const data = await register(email, password);
+      if (data.token) {
         setSuccess('Registration successful! Redirecting to login...');
         setTimeout(() => navigate('/login'), 1500);
       } else {

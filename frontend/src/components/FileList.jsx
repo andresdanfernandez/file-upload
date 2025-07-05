@@ -67,11 +67,18 @@ function FileList() {
                     <TableBody>
                       {files.map((file, idx) => (
                         <TableRow key={idx} hover>
-                          <TableCell>{file.name}</TableCell>
+                          <TableCell>{file.filename}</TableCell>
                           <TableCell>{file.size}</TableCell>
-                          <TableCell>{file.uploaded}</TableCell>
+                          <TableCell>{new Date(file.uploaded_at).toLocaleDateString()}</TableCell>
                           <TableCell>
-                            <Button size="small" variant="outlined" sx={{ borderRadius: 2, fontWeight: 600 }}>Download</Button>
+                            <Button 
+                              size="small" 
+                              variant="outlined" 
+                              sx={{ borderRadius: 2, fontWeight: 600 }}
+                              onClick={() => window.open(file.url, '_blank')}
+                            >
+                              Download
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
