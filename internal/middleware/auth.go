@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"file-upload/internal/services"
+	"log"
 	"net/http"
 	"strings"
 
@@ -26,14 +27,17 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		token := tokenParts[1]
-		claims, err := services.ValidateToken(token)
+		
+		claims, err := services.ValidateSupabaseToken(token)
 		if err != nil {
+			log.Printf("Token validation failed: %v", err)
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			c.Abort()
 			return
 		}
 
-		// Set user info in context
+		log.Printf("Token validated successfully for user: %s (ID: %d)", claims.Email, claims.UserID)
+
 		c.Set("user_id", claims.UserID)
 		c.Set("email", claims.Email)
 		c.Next()

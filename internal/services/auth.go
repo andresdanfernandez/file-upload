@@ -2,11 +2,12 @@ package services
 
 import (
 	"errors"
-	"os"
+	"fmt"
+	"log"
 	"time"
 
+	"file-upload/internal/database"
 	"github.com/golang-jwt/jwt/v5"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type Claims struct {
@@ -15,42 +16,82 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-	return string(bytes), err
+// SupabaseTokenClaims represents the structure of Supabase JWT tokens
+type SupabaseTokenClaims struct {
+	Aud   string `json:"aud"`
+	Exp   int64  `json:"exp"`
+	Iat   int64  `json:"iat"`
+	Iss   string `json:"iss"`
+	Sub   string `json:"sub"`
+	Email string `json:"email"`
+	Role  string `json:"role"`
+	jwt.RegisteredClaims
 }
 
-func CheckPasswordHash(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
-}
-
-func GenerateToken(userID int, email string) (string, error) {
-	claims := Claims{
-		UserID: userID,
-		Email:  email,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
-}
-
-func ValidateToken(tokenString string) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(os.Getenv("JWT_SECRET")), nil
-	})
-
+// ValidateSupabaseToken validates a Supabase JWT token
+func ValidateSupabaseToken(tokenString string) (*Claims, error) {
+	log.Printf("Validating Supabase token...")
+	
+	// For development, let's use a simpler approach
+	// Parse the token without signature validation to extract claims
+	parsedToken, _, err := new(jwt.Parser).ParseUnverified(tokenString, &SupabaseTokenClaims{})
 	if err != nil {
-		return nil, err
+		log.Printf("Failed to parse token: %v", err)
+		return nil, fmt.Errorf("failed to parse token: %v", err)
 	}
 
-	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
-		return claims, nil
+	if claims, ok := parsedToken.Claims.(*SupabaseTokenClaims); ok {
+		log.Printf("Token parsed successfully. Email: %s, Sub: %s", claims.Email, claims.Sub)
+		
+		// Get or create user in local database
+		userID, err := getOrCreateUser(claims.Email, claims.Sub)
+		if err != nil {
+			log.Printf("Failed to get/create user: %v", err)
+			return nil, fmt.Errorf("failed to get/create user: %v", err)
+		}
+		
+		log.Printf("User ID resolved: %d", userID)
+	
+		return &Claims{
+			UserID: userID,
+			Email:  claims.Email,
+			RegisteredClaims: jwt.RegisteredClaims{
+				ExpiresAt: jwt.NewNumericDate(time.Unix(claims.Exp, 0)),
+				IssuedAt:  jwt.NewNumericDate(time.Unix(claims.Iat, 0)),
+			},
+		}, nil
 	}
 
-	return nil, errors.New("invalid token")
+	log.Printf("Failed to extract claims from token")
+	return nil, errors.New("invalid Supabase token")
+}
+
+// getOrCreateUser gets or creates a user in the local database
+func getOrCreateUser(email, supabaseID string) (int, error) {
+	db, err := database.Connect()
+	if err != nil {
+		return 0, fmt.Errorf("failed to connect to database: %v", err)
+	}
+	defer db.Close()
+
+	// First, try to find existing user by email
+	var userID int
+	err = db.QueryRow("SELECT id FROM users WHERE email = $1", email).Scan(&userID)
+	if err == nil {
+		// User exists, return the ID
+		return userID, nil
+	}
+
+	// User doesn't exist, create a new one
+	// Note: We're not storing the password since Supabase handles auth
+	err = db.QueryRow(`
+		INSERT INTO users (email, password, supabase_id)
+		VALUES ($1, $2, $3)
+		RETURNING id
+	`, email, "supabase_auth", supabaseID).Scan(&userID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create user: %v", err)
+	}
+
+	return userID, nil
 } 

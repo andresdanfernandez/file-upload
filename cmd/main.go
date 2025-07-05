@@ -15,7 +15,6 @@ func main() {
 
 	router := gin.Default()
 
-	// CORS configuration
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:3000"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -24,14 +23,10 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	// Health check
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
 	})
 
-	// Public routes
-	router.POST("/register", handlers.RegisterHandler)
-	router.POST("/login", handlers.LoginHandler)
 
 	// Protected routes
 	protected := router.Group("/")

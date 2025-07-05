@@ -21,6 +21,18 @@ func DownloadHandler(c *gin.Context) {
 		return
 	}
 
+	// Debug: Log environment variables
+	log.Printf("AWS_REGION: %s", os.Getenv("AWS_REGION"))
+	log.Printf("AWS_ACCESS_KEY_ID: %s", os.Getenv("AWS_ACCESS_KEY_ID"))
+	log.Printf("S3_BUCKET_NAME: %s", os.Getenv("S3_BUCKET_NAME"))
+	
+	// Check if AWS credentials are set
+	if os.Getenv("AWS_ACCESS_KEY_ID") == "" || os.Getenv("AWS_SECRET_ACCESS_KEY") == "" {
+		log.Println("AWS credentials not found in environment")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "AWS credentials not configured"})
+		return
+	}
+
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String(os.Getenv("AWS_REGION")),
 		Credentials: credentials.NewStaticCredentials(
@@ -49,5 +61,5 @@ func DownloadHandler(c *gin.Context) {
 		return
 	}
 
-	c.Redirect(http.StatusFound, urlStr)
+	c.JSON(http.StatusOK, gin.H{"url": urlStr})
 }
