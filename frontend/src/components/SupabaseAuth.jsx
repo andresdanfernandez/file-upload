@@ -33,7 +33,7 @@ function SupabaseAuth() {
           <Auth
             supabaseClient={supabase}
             appearance={{ theme: ThemeSupa }}
-            providers={['google', 'github']}
+            providers={['google']}
             theme="dark"
           />
         </Paper>

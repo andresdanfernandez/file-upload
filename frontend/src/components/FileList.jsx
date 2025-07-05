@@ -11,7 +11,7 @@ import TableRow from '@mui/material/TableRow'
 import Button from '@mui/material/Button'
 import Grow from '@mui/material/Grow'
 import Fade from '@mui/material/Fade'
-import { listFiles, getToken, getDownloadUrl } from '../api'
+import { listFiles, downloadFile } from '../api'
 
 function FileList() {
   const [files, setFiles] = useState([]);
@@ -23,20 +23,14 @@ function FileList() {
       setLoading(true);
       setError('');
       try {
-        const token = getToken();
-        if (!token) {
-          setError('Not authenticated');
-          setLoading(false);
-          return;
-        }
-        const res = await listFiles(token);
+        const res = await listFiles();
         if (Array.isArray(res)) {
           setFiles(res);
         } else {
           setError(res.error || 'Failed to fetch files');
         }
       } catch (err) {
-        setError('Failed to fetch files');
+        setError(err.message || 'Failed to fetch files');
       } finally {
         setLoading(false);
       }
@@ -75,7 +69,17 @@ function FileList() {
                               size="small" 
                               variant="outlined" 
                               sx={{ borderRadius: 2, fontWeight: 600 }}
-                              onClick={() => window.open(file.url, '_blank')}
+                              onClick={async () => {
+                                try {
+                                  // Extract the key from the S3 URL
+                                  const key = file.url.split('/').pop();
+                                  const presignedUrl = await downloadFile(key);
+                                  window.open(presignedUrl, '_blank');
+                                } catch (error) {
+                                  console.error('Download failed:', error);
+                                  alert('Download failed: ' + error.message);
+                                }
+                              }}
                             >
                               Download
                             </Button>

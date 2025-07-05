@@ -6,7 +6,7 @@ import Button from '@mui/material/Button'
 import Stack from '@mui/material/Stack'
 import Grow from '@mui/material/Grow'
 import Fade from '@mui/material/Fade'
-import { uploadFile, getToken } from '../api'
+import { uploadFile } from '../api'
 
 function Upload() {
   const [file, setFile] = useState(null)
@@ -20,20 +20,14 @@ function Upload() {
     setResult('')
     setError('')
     try {
-      const token = getToken()
-      if (!token) {
-        setError('Not authenticated')
-        setLoading(false)
-        return
-      }
-      const res = await uploadFile(file, token)
+      const res = await uploadFile(file)
       if (res.url) {
         setResult(`File uploaded! URL: ${res.url}`)
       } else {
         setError(res.error || 'Upload failed')
       }
     } catch (err) {
-      setError('Upload failed')
+      setError(err.message || 'Upload failed')
     } finally {
       setLoading(false)
     }
