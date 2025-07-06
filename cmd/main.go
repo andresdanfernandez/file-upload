@@ -34,11 +34,6 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
 	})
 
-	// Handle OPTIONS requests for preflight
-	router.OPTIONS("/*path", func(c *gin.Context) {
-		c.Status(http.StatusOK)
-	})
-
 	// Protected routes
 	protected := router.Group("/")
 	protected.Use(middleware.AuthMiddleware())

@@ -12,6 +12,7 @@ func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Allow OPTIONS requests to pass through for CORS preflight
 		if c.Request.Method == "OPTIONS" {
+			log.Printf("Auth middleware: Allowing OPTIONS request to pass through")
 			c.Next()
 			return
 		}
@@ -20,6 +21,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		log.Printf("Auth middleware: Authorization header present: %t", authHeader != "")
 		
 		if authHeader == "" {
+			log.Printf("Auth middleware: No authorization header found")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
 			c.Abort()
 			return
