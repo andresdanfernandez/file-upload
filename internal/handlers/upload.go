@@ -10,12 +10,46 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func sanitizeFilename(name string) string {
+	// Remove path separators and dangerous characters
+	name = strings.ReplaceAll(name, "..", "")
+	name = strings.ReplaceAll(name, "/", "_")
+	name = strings.ReplaceAll(name, "\\", "_")
+	name = strings.ReplaceAll(name, "\x00", "_")
+	return name
+}
+
+func allowedFileType(filename string) bool {
+	allowed := []string{".jpg", ".jpeg", ".png", ".gif", ".pdf", ".txt", ".zip"}
+	ext := strings.ToLower(filename[strings.LastIndex(filename, ".") : ])
+	for _, a := range allowed {
+		if ext == a {
+			return true
+		}
+	}
+	return false
+}
+
 func UploadHandler(c *gin.Context) {
 	file, err := c.FormFile("file")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "file required"})
 		return
 	}
+
+	// Enforce max file size (10MB)
+	if file.Size > 10*1024*1024 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "file too large (max 10MB)"})
+		return
+	}
+
+	// Enforce allowed file types
+	if !allowedFileType(file.Filename) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "file type not allowed"})
+		return
+	}
+
+	safeFilename := sanitizeFilename(file.Filename)
 
 	src, err := file.Open()
 	if err != nil {
@@ -24,7 +58,7 @@ func UploadHandler(c *gin.Context) {
 	}
 	defer src.Close()
 
-	url, err := services.UploadFile(file.Filename, src)
+	url, err := services.UploadFile(safeFilename, src)
 	if err != nil {
 		log.Println("Failed to upload file:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "upload failed"})
@@ -43,7 +77,7 @@ func UploadHandler(c *gin.Context) {
 	_, err = db.Exec(`
         INSERT INTO files (user_id, filename, url, size)
         VALUES ($1, $2, $3, $4)
-    `, userID, file.Filename, url, file.Size)
+    `, userID, safeFilename, url, file.Size)
 	if err != nil {
 		log.Println("Failed to insert file metadata:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save file metadata"})

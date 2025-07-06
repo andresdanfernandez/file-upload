@@ -13,6 +13,19 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
+func sanitizeS3Key(name string) string {
+	// Only allow alphanumeric, dash, underscore, dot
+	result := make([]rune, 0, len(name))
+	for _, r := range name {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_' || r == '.' {
+			result = append(result, r)
+		} else {
+			result = append(result, '_')
+		}
+	}
+	return string(result)
+}
+
 func UploadFile(filename string, data io.Reader) (string, error) {
 	sess, _ := session.NewSession(&aws.Config{
 		Region: aws.String(os.Getenv("AWS_REGION")),
@@ -24,7 +37,8 @@ func UploadFile(filename string, data io.Reader) (string, error) {
 	})
 
 	svc := s3.New(sess)
-	key := fmt.Sprintf("%d_%s", time.Now().UnixNano(), filename)
+	safeFilename := sanitizeS3Key(filename)
+	key := fmt.Sprintf("%d_%s", time.Now().UnixNano(), safeFilename)
 
 	buffer := new(bytes.Buffer)
 	_, err := io.Copy(buffer, data)
