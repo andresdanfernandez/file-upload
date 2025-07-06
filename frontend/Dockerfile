@@ -13,8 +13,14 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Expose port
-EXPOSE 5173
+# Build the application
+RUN npm run build
 
-# Start development server
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"] 
+# Install serve to run the built application
+RUN npm install -g serve
+
+# Expose port (will be overridden by Railway's PORT env var)
+EXPOSE 4173
+
+# Start production server
+CMD ["serve", "-s", "dist", "-l", "4173"] 
