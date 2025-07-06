@@ -22,6 +22,7 @@ func main() {
 			"http://localhost:3000", 
 			"http://localhost:4173",
 			"https://file-upload-frontend.onrender.com",
+			"https://file-upload-frontend-boa6.onrender.com",
 		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
