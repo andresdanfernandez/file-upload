@@ -15,7 +15,6 @@ func main() {
 
 	router := gin.Default()
 
-	// CORS configuration - apply to all routes
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{
 			"http://localhost:5173", 
@@ -34,13 +33,14 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
 	})
 
-	// Protected routes
+	// protected routes
 	protected := router.Group("/")
 	protected.Use(middleware.AuthMiddleware())
 	{
 		protected.POST("/upload", handlers.UploadHandler)
 		protected.GET("/files", handlers.ListFilesHandler)
 		protected.GET("/download/:key", handlers.DownloadHandler)
+		protected.DELETE("/files/:id", handlers.DeleteFileHandler)
 	}
 
 	router.Run(":" + config.Env("PORT", "8080"))

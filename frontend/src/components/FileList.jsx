@@ -11,7 +11,7 @@ import TableRow from '@mui/material/TableRow'
 import Button from '@mui/material/Button'
 import Grow from '@mui/material/Grow'
 import Fade from '@mui/material/Fade'
-import { listFiles, downloadFile } from '../api'
+import { listFiles, downloadFile, deleteFile } from '../api'
 
 function FileList() {
   const [files, setFiles] = useState([]);
@@ -82,6 +82,23 @@ function FileList() {
                               }}
                             >
                               Download
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="error"
+                              sx={{ borderRadius: 2, fontWeight: 600, ml: 1 }}
+                              onClick={async () => {
+                                if (!window.confirm(`Delete file '${file.filename}'?`)) return;
+                                try {
+                                  await deleteFile(file.id);
+                                  setFiles(files => files.filter(f => f.id !== file.id));
+                                } catch (err) {
+                                  setError(err?.error || err?.message || String(err) || 'Delete failed');
+                                }
+                              }}
+                            >
+                              Delete
                             </Button>
                           </TableCell>
                         </TableRow>

@@ -90,3 +90,20 @@ export async function downloadFile(key) {
   const data = await res.json();
   return data.url;
 }
+
+// delete file
+export async function deleteFile(id) {
+  const token = await getSupabaseToken();
+  if (!token) {
+    throw new Error('Not authenticated');
+  }
+  const res = await fetch(`${API_BASE}/files/${id}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Delete failed: ${res.status} - ${errorText}`);
+  }
+  return res.json();
+}

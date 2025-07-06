@@ -44,3 +44,30 @@ func UploadFile(filename string, data io.Reader) (string, error) {
 
 	return fmt.Sprintf("https://%s.s3.amazonaws.com/%s", os.Getenv("S3_BUCKET_NAME"), key), nil
 }
+
+func DeleteFileFromS3(key string) error {
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String(os.Getenv("AWS_REGION")),
+		Credentials: credentials.NewStaticCredentials(
+			os.Getenv("AWS_ACCESS_KEY_ID"),
+			os.Getenv("AWS_SECRET_ACCESS_KEY"),
+			"",
+		),
+	})
+	if err != nil {
+		return err
+	}
+
+	svc := s3.New(sess)
+	_, err = svc.DeleteObject(&s3.DeleteObjectInput{
+		Bucket: aws.String(os.Getenv("S3_BUCKET_NAME")),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return err
+	}
+	return svc.WaitUntilObjectNotExists(&s3.HeadObjectInput{
+		Bucket: aws.String(os.Getenv("S3_BUCKET_NAME")),
+		Key:    aws.String(key),
+	})
+}
