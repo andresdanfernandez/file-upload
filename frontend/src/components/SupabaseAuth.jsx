@@ -44,7 +44,16 @@ function SupabaseAuth() {
   return (
     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
       <Paper elevation={2} sx={{ width: '100%', maxWidth: 400, p: 4, borderRadius: 4, boxShadow: 2 }}>
-        <Typography variant="h4" fontWeight={700} gutterBottom align="center">
+        <Typography variant="h4" fontWeight={700} gutterBottom align="center"
+          sx={{
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            maxWidth: '100%',
+            display: 'block',
+            mb: 2
+          }}
+        >
           Welcome, {session.user.email}!
         </Typography>
         <Typography variant="body1" align="center" sx={{ mb: 3 }}>

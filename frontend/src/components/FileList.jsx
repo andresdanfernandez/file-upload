@@ -65,41 +65,43 @@ function FileList() {
                           <TableCell>{file.size}</TableCell>
                           <TableCell>{new Date(file.uploaded_at).toLocaleDateString()}</TableCell>
                           <TableCell>
-                            <Button 
-                              size="small" 
-                              variant="outlined" 
-                              sx={{ borderRadius: 2, fontWeight: 600 }}
-                              onClick={async () => {
-                                try {
-                                  // Extract the key from the S3 URL
-                                  const key = file.url.split('/').pop();
-                                  const presignedUrl = await downloadFile(key);
-                                  window.open(presignedUrl, '_blank');
-                                } catch (error) {
-                                  console.error('Download failed:', error);
-                                  alert('Download failed: ' + error.message);
-                                }
-                              }}
-                            >
-                              Download
-                            </Button>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              color="error"
-                              sx={{ borderRadius: 2, fontWeight: 600, ml: 1 }}
-                              onClick={async () => {
-                                if (!window.confirm(`Delete file '${file.filename}'?`)) return;
-                                try {
-                                  await deleteFile(file.id);
-                                  setFiles(files => files.filter(f => f.id !== file.id));
-                                } catch (err) {
-                                  setError(err?.error || err?.message || String(err) || 'Delete failed');
-                                }
-                              }}
-                            >
-                              Delete
-                            </Button>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                              <Button 
+                                size="small" 
+                                variant="outlined" 
+                                sx={{ borderRadius: 2, fontWeight: 600 }}
+                                onClick={async () => {
+                                  try {
+                                    // Extract the key from the S3 URL
+                                    const key = file.url.split('/').pop();
+                                    const presignedUrl = await downloadFile(key);
+                                    window.open(presignedUrl, '_blank');
+                                  } catch (error) {
+                                    console.error('Download failed:', error);
+                                    alert('Download failed: ' + error.message);
+                                  }
+                                }}
+                              >
+                                Download
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="error"
+                                sx={{ borderRadius: 2, fontWeight: 600 }}
+                                onClick={async () => {
+                                  if (!window.confirm(`Delete file '${file.filename}'?`)) return;
+                                  try {
+                                    await deleteFile(file.id);
+                                    setFiles(files => files.filter(f => f.id !== file.id));
+                                  } catch (err) {
+                                    setError(err?.error || err?.message || String(err) || 'Delete failed');
+                                  }
+                                }}
+                              >
+                                Delete
+                              </Button>
+                            </Box>
                           </TableCell>
                         </TableRow>
                       ))}
