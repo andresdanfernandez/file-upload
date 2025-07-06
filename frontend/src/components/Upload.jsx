@@ -27,7 +27,7 @@ function Upload() {
         setError(res.error || 'Upload failed')
       }
     } catch (err) {
-      setError(err.message || 'Upload failed')
+      setError(err?.error || err?.message || String(err) || 'Upload failed')
     } finally {
       setLoading(false)
     }

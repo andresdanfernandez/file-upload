@@ -27,10 +27,10 @@ function FileList() {
         if (Array.isArray(res)) {
           setFiles(res);
         } else {
-          setError(res.error || 'Failed to fetch files');
+          setError(res?.error || res?.message || String(res) || 'Failed to fetch files');
         }
       } catch (err) {
-        setError(err.message || 'Failed to fetch files');
+        setError(err?.error || err?.message || String(err) || 'Failed to fetch files');
       } finally {
         setLoading(false);
       }
