@@ -1,5 +1,5 @@
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:18-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -7,8 +7,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies with reduced memory usage
-RUN npm ci --only=production --no-audit --no-fund
+# Install dependencies with optimizations
+RUN npm ci --silent --no-audit --no-fund
 
 # Copy source code
 COPY . .
@@ -17,16 +17,19 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM nginx:alpine
+FROM node:18-alpine
 
-# Copy built application from builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Install a minimal server
+RUN npm install -g serve
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/nginx.conf
+# Set working directory
+WORKDIR /app
+
+# Copy built files
+COPY --from=builder /app/dist ./dist
 
 # Expose port
-EXPOSE 80
+EXPOSE 3000
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"] 
+# Start the server
+CMD ["serve", "-s", "dist", "-l", "3000"] 
