@@ -17,7 +17,13 @@ func main() {
 
 	// CORS configuration for production
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:3000", "http://localhost:4173", "https://*.railway.app", "https://*.up.railway.app"},
+		AllowOrigins:     []string{
+			"http://localhost:5173", 
+			"http://localhost:3000", 
+			"http://localhost:4173",
+			"https://amused-creation-production.up.railway.app",
+			"https://file-upload-production-9bd0.up.railway.app",
+		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
