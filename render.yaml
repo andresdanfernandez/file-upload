@@ -44,8 +44,8 @@ services:
     env: docker
     region: oregon
     plan: free
-    dockerfilePath: ./frontend/Dockerfile
-    dockerContext: ./frontend
+    dockerfilePath: frontend.Dockerfile
+    dockerContext: .
     envVars:
       - key: VITE_API_BASE
         value: https://file-upload-backend.onrender.com
