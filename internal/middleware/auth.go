@@ -5,12 +5,17 @@ import (
 	"log"
 	"net/http"
 	"strings"
-
 	"github.com/gin-gonic/gin"
 )
 
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Allow OPTIONS requests to pass through for CORS preflight
+		if c.Request.Method == "OPTIONS" {
+			c.Next()
+			return
+		}
+		
 		authHeader := c.GetHeader("Authorization")
 		log.Printf("Auth middleware: Authorization header present: %t", authHeader != "")
 		
@@ -19,7 +24,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-
+		
 		// Extract token from "Bearer <token>"
 		tokenParts := strings.Split(authHeader, " ")
 		if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
@@ -28,7 +33,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-
+		
 		token := tokenParts[1]
 		log.Printf("Auth middleware: Token length: %d", len(token))
 		
@@ -39,11 +44,10 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-
+		
 		log.Printf("Auth middleware: Token validated successfully for user: %s (ID: %d)", claims.Email, claims.UserID)
-
 		c.Set("user_id", claims.UserID)
 		c.Set("email", claims.Email)
 		c.Next()
 	}
-} 
+}
