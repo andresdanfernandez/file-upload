@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"file-upload/internal/database"
@@ -32,8 +33,56 @@ type SupabaseTokenClaims struct {
 func ValidateSupabaseToken(tokenString string) (*Claims, error) {
 	log.Printf("Validating Supabase token...")
 	
-	// For development, let's use a simpler approach
-	// Parse the token without signature validation to extract claims
+	// Get Supabase JWT secret from environment
+	jwtSecret := os.Getenv("SUPABASE_JWT_SECRET")
+	if jwtSecret == "" {
+		log.Printf("SUPABASE_JWT_SECRET not found, using unverified parsing for development")
+		// For development, use unverified parsing
+		return validateTokenUnverified(tokenString)
+	}
+	
+	// Parse and validate the token with the secret
+	token, err := jwt.ParseWithClaims(tokenString, &SupabaseTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+		// Validate the signing method
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(jwtSecret), nil
+	})
+	
+	if err != nil {
+		log.Printf("Token validation failed: %v", err)
+		return nil, fmt.Errorf("token validation failed: %v", err)
+	}
+	
+	if claims, ok := token.Claims.(*SupabaseTokenClaims); ok && token.Valid {
+		log.Printf("Token validated successfully. Email: %s, Sub: %s", claims.Email, claims.Sub)
+		
+		// Get or create user in local database
+		userID, err := getOrCreateUser(claims.Email, claims.Sub)
+		if err != nil {
+			log.Printf("Failed to get/create user: %v", err)
+			return nil, fmt.Errorf("failed to get/create user: %v", err)
+		}
+		
+		log.Printf("User ID resolved: %d", userID)
+	
+		return &Claims{
+			UserID: userID,
+			Email:  claims.Email,
+			RegisteredClaims: jwt.RegisteredClaims{
+				ExpiresAt: jwt.NewNumericDate(time.Unix(claims.Exp, 0)),
+				IssuedAt:  jwt.NewNumericDate(time.Unix(claims.Iat, 0)),
+			},
+		}, nil
+	}
+
+	log.Printf("Failed to extract claims from token")
+	return nil, errors.New("invalid Supabase token")
+}
+
+// validateTokenUnverified parses token without signature validation (for development)
+func validateTokenUnverified(tokenString string) (*Claims, error) {
 	parsedToken, _, err := new(jwt.Parser).ParseUnverified(tokenString, &SupabaseTokenClaims{})
 	if err != nil {
 		log.Printf("Failed to parse token: %v", err)
@@ -41,7 +90,13 @@ func ValidateSupabaseToken(tokenString string) (*Claims, error) {
 	}
 
 	if claims, ok := parsedToken.Claims.(*SupabaseTokenClaims); ok {
-		log.Printf("Token parsed successfully. Email: %s, Sub: %s", claims.Email, claims.Sub)
+		log.Printf("Token parsed successfully (unverified). Email: %s, Sub: %s", claims.Email, claims.Sub)
+		
+		// Check if token is expired
+		if claims.Exp > 0 && time.Now().Unix() > claims.Exp {
+			log.Printf("Token is expired")
+			return nil, errors.New("token is expired")
+		}
 		
 		// Get or create user in local database
 		userID, err := getOrCreateUser(claims.Email, claims.Sub)
