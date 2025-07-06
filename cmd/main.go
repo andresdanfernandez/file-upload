@@ -15,7 +15,7 @@ func main() {
 
 	router := gin.Default()
 
-	// CORS configuration
+	// CORS configuration - apply to all routes
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{
 			"http://localhost:5173", 
@@ -32,6 +32,11 @@ func main() {
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
+	})
+
+	// Handle OPTIONS requests for preflight
+	router.OPTIONS("/*path", func(c *gin.Context) {
+		c.Status(http.StatusOK)
 	})
 
 	// Protected routes
