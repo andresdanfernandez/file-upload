@@ -11,7 +11,7 @@ export default defineConfig({
   preview: {
     host: '0.0.0.0',
     port: parseInt(process.env.PORT) || 4173,
-    allowedHosts: ['amused-creation-production.up.railway.app','healthcheck.railway.app', 'localhost', '127.0.0.1', '0.0.0.0', '*']
+    allowedHosts: ['localhost', '127.0.0.1', '0.0.0.0', '*']
   },
   build: {
     outDir: 'dist',

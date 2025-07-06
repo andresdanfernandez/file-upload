@@ -32,6 +32,8 @@ type SupabaseTokenClaims struct {
 // ValidateSupabaseToken validates a Supabase JWT token
 func ValidateSupabaseToken(tokenString string) (*Claims, error) {
 	log.Printf("Validating Supabase token...")
+	log.Printf("Token length: %d", len(tokenString))
+	log.Printf("Token preview: %s...", tokenString[:min(50, len(tokenString))])
 	
 	// Get Supabase JWT secret from environment
 	jwtSecret := os.Getenv("SUPABASE_JWT_SECRET")
@@ -83,6 +85,8 @@ func ValidateSupabaseToken(tokenString string) (*Claims, error) {
 
 // validateTokenUnverified parses token without signature validation (for development)
 func validateTokenUnverified(tokenString string) (*Claims, error) {
+	log.Printf("Attempting unverified token parsing...")
+	
 	parsedToken, _, err := new(jwt.Parser).ParseUnverified(tokenString, &SupabaseTokenClaims{})
 	if err != nil {
 		log.Printf("Failed to parse token: %v", err)
@@ -91,10 +95,11 @@ func validateTokenUnverified(tokenString string) (*Claims, error) {
 
 	if claims, ok := parsedToken.Claims.(*SupabaseTokenClaims); ok {
 		log.Printf("Token parsed successfully (unverified). Email: %s, Sub: %s", claims.Email, claims.Sub)
+		log.Printf("Token claims: Aud=%s, Exp=%d, Iat=%d, Iss=%s", claims.Aud, claims.Exp, claims.Iat, claims.Iss)
 		
 		// Check if token is expired
 		if claims.Exp > 0 && time.Now().Unix() > claims.Exp {
-			log.Printf("Token is expired")
+			log.Printf("Token is expired. Current time: %d, Expiry: %d", time.Now().Unix(), claims.Exp)
 			return nil, errors.New("token is expired")
 		}
 		
@@ -119,6 +124,14 @@ func validateTokenUnverified(tokenString string) (*Claims, error) {
 
 	log.Printf("Failed to extract claims from token")
 	return nil, errors.New("invalid Supabase token")
+}
+
+// min helper function
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 // getOrCreateUser gets or creates a user in the local database

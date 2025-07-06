@@ -11,6 +11,12 @@ export async function getSupabaseToken() {
   const { data: { session } } = await supabase.auth.getSession();
   console.log('Supabase session:', session ? 'exists' : 'null');
   console.log('Access token:', session?.access_token ? 'exists' : 'null');
+  
+  if (session?.access_token) {
+    console.log('Token preview:', session.access_token.substring(0, 20) + '...');
+    console.log('Token length:', session.access_token.length);
+  }
+  
   return session?.access_token;
 }
 
@@ -21,6 +27,8 @@ export async function uploadFile(file) {
     throw new Error('Not authenticated');
   }
   
+  console.log('Upload: Sending token length:', token.length);
+  
   const formData = new FormData();
   formData.append('file', file);
   const res = await fetch(`${API_BASE}/upload`, {
@@ -28,6 +36,13 @@ export async function uploadFile(file) {
     headers: { 'Authorization': `Bearer ${token}` },
     body: formData
   });
+  
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error('Upload failed:', res.status, errorText);
+    throw new Error(`Upload failed: ${res.status} - ${errorText}`);
+  }
+  
   return res.json();
 }
 
@@ -38,9 +53,18 @@ export async function listFiles() {
     throw new Error('Not authenticated');
   }
   
+  console.log('List files: Sending token length:', token.length);
+  
   const res = await fetch(`${API_BASE}/files`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
+  
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error('List files failed:', res.status, errorText);
+    throw new Error(`List files failed: ${res.status} - ${errorText}`);
+  }
+  
   return res.json();
 }
 
@@ -50,6 +74,8 @@ export async function downloadFile(key) {
   if (!token) {
     throw new Error('Not authenticated');
   }
+  
+  console.log('Download: Sending token length:', token.length);
   
   const res = await fetch(`${API_BASE}/download/${encodeURIComponent(key)}`, {
     headers: { 'Authorization': `Bearer ${token}` }

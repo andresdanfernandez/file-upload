@@ -15,14 +15,13 @@ func main() {
 
 	router := gin.Default()
 
-	// CORS configuration for production
+	// CORS configuration
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{
 			"http://localhost:5173", 
 			"http://localhost:3000", 
 			"http://localhost:4173",
-			"https://amused-creation-production.up.railway.app",
-			"https://file-upload-production-9bd0.up.railway.app",
+			"https://file-upload-frontend.onrender.com",
 		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},

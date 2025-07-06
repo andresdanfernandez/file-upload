@@ -1,0 +1,57 @@
+services:
+  # Backend API Service
+  - type: web
+    name: file-upload-backend
+    env: docker
+    region: oregon
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: file-upload-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: file-upload-db
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: file-upload-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: file-upload-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: file-upload-db
+          property: database
+      - key: AWS_REGION
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_BUCKET_NAME
+        sync: false
+
+  # Frontend Service
+  - type: web
+    name: file-upload-frontend
+    env: docker
+    region: oregon
+    plan: free
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    envVars:
+      - key: VITE_API_BASE
+        value: https://file-upload-backend.onrender.com
+
+databases:
+  - name: file-upload-db
+    databaseName: fileupload
+    user: fileupload_user
+    plan: free 
