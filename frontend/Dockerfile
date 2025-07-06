@@ -1,5 +1,5 @@
-# Use Node.js 20 Alpine as base image
-FROM node:20-alpine
+# Build stage
+FROM node:20-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -7,8 +7,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies with reduced memory usage
+RUN npm ci --only=production --no-audit --no-fund
 
 # Copy source code
 COPY . .
@@ -16,11 +16,17 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Install serve to run the built application
-RUN npm install -g serve
+# Production stage
+FROM nginx:alpine
 
-# Expose port (will be overridden by Railway's PORT env var)
-EXPOSE 4173
+# Copy built application from builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Start production server
-CMD ["serve", "-s", "dist", "-l", "4173"] 
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Expose port
+EXPOSE 80
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"] 
