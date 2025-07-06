@@ -49,6 +49,10 @@ services:
     envVars:
       - key: VITE_API_BASE
         value: https://file-upload-backend.onrender.com
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
 
 databases:
   - name: file-upload-db
