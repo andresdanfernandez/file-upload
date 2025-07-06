@@ -37,7 +37,6 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 		
 		token := tokenParts[1]
-		log.Printf("Auth middleware: Token length: %d", len(token))
 		
 		claims, err := services.ValidateSupabaseToken(token)
 		if err != nil {
@@ -47,7 +46,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 		
-		log.Printf("Auth middleware: Token validated successfully for user: %s (ID: %d)", claims.Email, claims.UserID)
+		log.Printf("Auth middleware: Token validated successfully for user.")
 		c.Set("user_id", claims.UserID)
 		c.Set("email", claims.Email)
 		c.Next()

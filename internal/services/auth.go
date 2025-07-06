@@ -32,15 +32,12 @@ type SupabaseTokenClaims struct {
 // ValidateSupabaseToken validates a Supabase JWT token
 func ValidateSupabaseToken(tokenString string) (*Claims, error) {
 	log.Printf("Validating Supabase token...")
-	log.Printf("Token length: %d", len(tokenString))
-	log.Printf("Token preview: %s...", tokenString[:min(50, len(tokenString))])
 	
 	// Get Supabase JWT secret from environment
 	jwtSecret := os.Getenv("SUPABASE_JWT_SECRET")
 	if jwtSecret == "" {
-		log.Printf("SUPABASE_JWT_SECRET not found, using unverified parsing for development")
-		// For development, use unverified parsing
-		return validateTokenUnverified(tokenString)
+		log.Printf("SUPABASE_JWT_SECRET not found. Refusing to validate token.")
+		return nil, errors.New("SUPABASE_JWT_SECRET not set; cannot validate token")
 	}
 	
 	// Parse and validate the token with the secret
@@ -58,7 +55,7 @@ func ValidateSupabaseToken(tokenString string) (*Claims, error) {
 	}
 	
 	if claims, ok := token.Claims.(*SupabaseTokenClaims); ok && token.Valid {
-		log.Printf("Token validated successfully. Email: %s, Sub: %s", claims.Email, claims.Sub)
+		log.Printf("Token validated successfully for user.")
 		
 		// Get or create user in local database
 		userID, err := getOrCreateUser(claims.Email, claims.Sub)
@@ -66,8 +63,7 @@ func ValidateSupabaseToken(tokenString string) (*Claims, error) {
 			log.Printf("Failed to get/create user: %v", err)
 			return nil, fmt.Errorf("failed to get/create user: %v", err)
 		}
-		
-		log.Printf("User ID resolved: %d", userID)
+		log.Printf("User ID resolved.")
 	
 		return &Claims{
 			UserID: userID,
