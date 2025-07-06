@@ -1,73 +1,92 @@
-# Railway Deployment Setup Guide
+# Railway Deployment Guide
 
 ## Overview
-This project consists of two services:
-1. **Backend** (Go API) - Handles file uploads, authentication, and file management
-2. **Frontend** (React) - User interface for file management
+This is a file upload application with:
+- **Backend**: Go API (Gin) with Supabase auth, AWS S3 storage, PostgreSQL
+- **Frontend**: React (Vite) with Supabase auth, Material-UI
 
-## Railway Project Setup
+## Railway Setup
 
-### 1. Create Two Services in Railway
+### 1. Create Two Services
 
-Create two separate services in your Railway project:
-- **Backend Service** (for the Go API)
-- **Frontend Service** (for the React app)
+#### Backend Service
+1. **New Service** → **GitHub Repo**
+2. **Repository**: `andresdanfernandez/file-upload`
+3. **Root Directory**: `/` (leave empty for root)
+4. **Name**: `backend` or `file-upload-api`
 
-### 2. Backend Service Configuration
+#### Frontend Service  
+1. **New Service** → **GitHub Repo**
+2. **Repository**: `andresdanfernandez/file-upload`
+3. **Root Directory**: `frontend`
+4. **Name**: `frontend` or `file-upload-frontend`
 
-**Repository**: Point to your main repository
-**Root Directory**: `/` (root of the repository)
-**Build Command**: Uses the Dockerfile in the root directory
+### 2. Backend Environment Variables
 
-**Required Environment Variables**:
+Add these to your backend service:
+
 ```
+# Port
 PORT=8080
-DB_HOST=your-database-host
+
+# Database (use Railway PostgreSQL or external)
+DB_HOST=your-db-host
 DB_PORT=5432
-DB_USER=your-database-user
-DB_PASSWORD=your-database-password
-DB_NAME=your-database-name
-AWS_REGION=your-aws-region
+DB_USER=your-db-user
+DB_PASSWORD=your-db-password
+DB_NAME=your-db-name
+
+# AWS S3
+AWS_REGION=us-east-1
 AWS_ACCESS_KEY_ID=your-aws-access-key
 AWS_SECRET_ACCESS_KEY=your-aws-secret-key
 S3_BUCKET_NAME=your-s3-bucket-name
-SUPABASE_URL=your-supabase-project-url
+
+# Supabase
+SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-supabase-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
-JWT_SECRET=your-jwt-secret
 ```
 
-### 3. Frontend Service Configuration
+### 3. Frontend Environment Variables
 
-**Repository**: Point to your main repository
-**Root Directory**: `/frontend`
-**Build Command**: Uses the Dockerfile in the frontend directory
+Add these to your frontend service:
 
-**Required Environment Variables**:
 ```
-PORT=4173
-VITE_API_BASE=https://your-backend-service-url.railway.app
-VITE_SUPABASE_URL=your-supabase-project-url
+# API Base URL (your backend service URL)
+VITE_API_BASE=https://your-backend-service.railway.app
+
+# Supabase
+VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
 ### 4. Database Setup
 
-You'll need a PostgreSQL database. You can:
-- Use Railway's PostgreSQL plugin
-- Use an external database (Supabase, AWS RDS, etc.)
+#### Option A: Railway PostgreSQL
+1. **New Service** → **Database** → **PostgreSQL**
+2. Railway will auto-set these variables:
+   ```
+   PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE, DATABASE_URL
+   ```
+3. Update your backend variables to use Railway's values:
+   ```
+   DB_HOST=${PGHOST}
+   DB_PORT=${PGPORT}
+   DB_USER=${PGUSER}
+   DB_PASSWORD=${PGPASSWORD}
+   DB_NAME=${PGDATABASE}
+   ```
 
-If using Railway's PostgreSQL:
-1. Add PostgreSQL plugin to your project
-2. Use the connection details provided by Railway
+#### Option B: External Database
+Use Supabase, AWS RDS, or any PostgreSQL provider.
 
-### 5. S3 Setup
+### 5. AWS S3 Setup
 
-You'll need an AWS S3 bucket for file storage:
-1. Create an S3 bucket in AWS
-2. Create an IAM user with S3 access
-3. Get the access key and secret key
-4. Configure CORS on your S3 bucket:
+1. **Create S3 Bucket** in AWS Console
+2. **Create IAM User** with S3 access
+3. **Get Access Keys** from IAM
+4. **Configure CORS** on your S3 bucket:
 
 ```json
 [
@@ -82,59 +101,62 @@ You'll need an AWS S3 bucket for file storage:
 
 ### 6. Supabase Setup
 
-1. Create a Supabase project
-2. Get your project URL and anon key
-3. Create a service role key for backend authentication
-4. Set up your database schema (see `scripts/init_db.sql`)
+1. **Create Project** at [supabase.com](https://supabase.com)
+2. **Go to Settings** → **API**
+3. **Copy Project URL and anon key**
+4. **Create Service Role Key** for backend auth
 
-### 7. Deployment Steps
+### 7. Deployment Order
 
-1. **Deploy Backend First**:
-   - Push your code to GitHub
-   - Deploy the backend service
+1. **Deploy Backend First**
+   - Wait for it to be healthy
+   - Test: `https://your-backend.railway.app/health`
+
+2. **Set Frontend Variables**
+   - Set `VITE_API_BASE` to your backend URL
+
+3. **Deploy Frontend**
    - Wait for it to be healthy
 
-2. **Deploy Frontend**:
-   - Set the `VITE_API_BASE` to your backend service URL
-   - Deploy the frontend service
-   - Wait for it to be healthy
+### 8. Testing
 
-3. **Test the Deployment**:
-   - Visit your frontend service URL
-   - Test authentication
-   - Test file upload/download
+1. **Visit your frontend URL**
+2. **Sign up/sign in** with Supabase
+3. **Test file upload/download**
 
-### 8. Troubleshooting
+## Troubleshooting
 
-**404 Errors**:
-- Check that both services are deployed and healthy
-- Verify environment variables are set correctly
-- Check Railway logs for any build or runtime errors
+### Common Issues
 
-**CORS Errors**:
-- Verify the backend CORS configuration includes your frontend domain
-- Check that the frontend is using the correct backend URL
+**404 Errors:**
+- Check both services are deployed and healthy
+- Verify environment variables are set
+- Check Railway logs
 
-**Authentication Issues**:
-- Verify Supabase environment variables are correct
-- Check that the database is properly initialized
-- Verify JWT secret is set
+**CORS Errors:**
+- Verify backend CORS includes frontend domain
+- Check `VITE_API_BASE` is correct
 
-**File Upload Issues**:
-- Verify AWS S3 credentials are correct
+**Auth Issues:**
+- Verify Supabase environment variables
+- Check database is initialized
+
+**File Upload Issues:**
+- Verify AWS S3 credentials
 - Check S3 bucket permissions
-- Verify the bucket name is correct
+- Verify bucket name is correct
 
-### 9. Monitoring
+### Manual Redeploy
 
-- Use Railway's built-in logging to monitor both services
-- Set up alerts for service health
-- Monitor database and S3 usage
+If frontend doesn't auto-deploy:
+1. Go to frontend service
+2. **Deployments** tab
+3. Click **"Deploy"**
 
 ## Environment Variables Reference
 
-### Backend (.env)
-```env
+### Backend Required
+```
 PORT=8080
 DB_HOST=localhost
 DB_PORT=5432
@@ -148,12 +170,11 @@ S3_BUCKET_NAME=your-bucket
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-JWT_SECRET=your-jwt-secret
 ```
 
-### Frontend (.env)
-```env
-VITE_API_BASE=http://localhost:8080
+### Frontend Required
+```
+VITE_API_BASE=https://your-backend.railway.app
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ``` 
