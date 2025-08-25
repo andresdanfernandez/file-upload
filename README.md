@@ -3,7 +3,7 @@
 A full-stack file upload application built with Go, React, and modern cloud technologies. Users can securely upload, download, and manage files with authentication powered by Supabase.
 Link -> https://file-upload-frontend-boa6.onrender.com/
 
-## 🚀 Features
+## Features
 
 - **Secure File Upload/Download** - AWS S3 integration for scalable cloud storage
 - **User Authentication** - Supabase Auth UI with JWT token validation
@@ -12,7 +12,7 @@ Link -> https://file-upload-frontend-boa6.onrender.com/
 - **Containerized Deployment** - Docker and Docker Compose setup
 - **CI/CD Pipeline** - GitHub Actions for automated builds and deployment
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Backend
 - **Go 1.24.1** with Gin web framework
